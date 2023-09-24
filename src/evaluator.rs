@@ -2,10 +2,10 @@ use std::fmt::format;
 use crate::ast::{Expression, Identifier, IfStruct, Node, Program, Statement};
 use crate::environment::Environment;
 use crate::object::{FunctionStruct, Object};
-use crate::object::Object::ReturnValue;
+use crate::object::Object::{Null, ReturnValue};
 use crate::token::Token;
 
-pub fn eval(node: Node, env: & mut Environment) -> Option<Object> {
+pub fn eval(node: Node, env: & mut Environment) -> Object {
     match node {
         Node::Program(prog) => {
             eval_program(prog.statements, env)
@@ -22,43 +22,39 @@ pub fn eval(node: Node, env: & mut Environment) -> Option<Object> {
     }
 }
 
-fn eval_program(block: Vec<Statement>, env: & mut Environment) -> Option<Object>
+fn eval_program(block: Vec<Statement>, env: & mut Environment) -> Object
 {
 
-    let mut result = None;
+    let mut result = Null;
     for stmt in block {
         result = eval_statement(stmt, env);
-        if let Some(content) = result.clone() {
-            if let Object::ReturnValue(object) = content {
-                return Some(object.as_ref().clone())
-            }
-            if let Object::Error(_) = content {
-                return result;
-            }
+        if let Object::ReturnValue(object) = &result {
+            return object.as_ref().clone()
+        }
+        if let Object::Error(_) = &result {
+            return result;
         }
     }
     result
 }
 
-fn eval_block_statement(block: Vec<Statement>, env: & mut Environment) -> Option<Object>
+fn eval_block_statement(block: Vec<Statement>, env: & mut Environment) -> Object
 {
-    let mut result = None;
+    let mut result = Object::Null;
     for stmt in block {
         result = eval_statement(stmt, env);
-        if let Some(content) = &result {
-            if let ReturnValue(_) = content {
-                return result;
-            }
-            if let Object::Error(_) = content {
-                return result;
-            }
+        if let ReturnValue(_) = &result {
+            return result;
+        }
+        if let Object::Error(_) = &result {
+            return result;
         }
     }
 
     result
 }
 
-fn eval_statement(stmt: Statement, env: & mut Environment) -> Option<Object>
+fn eval_statement(stmt: Statement, env: & mut Environment) -> Object
 {
     match stmt {
         Statement::ExpressionStatement(expr) => {
@@ -66,45 +62,34 @@ fn eval_statement(stmt: Statement, env: & mut Environment) -> Option<Object>
         },
         Statement::ReturnStatement(expr) => {
             let inner_value = eval(Node::Expression(expr), env);
-            match inner_value {
-                Some(content) => {
-                    Some(ReturnValue(Box::new(content)))
-                },
-                None => {
-                    None
-                }
-            }
+            ReturnValue(Box::new(inner_value))
         },
         Statement::LetStatement(id, expr) => {
             let val = eval(Node::Expression(expr), env);
-            match val {
-                Some(content) => {
-                    env.set(id.get_id(), content);
-                    Some(Object::Null)
-                },
-                _=> {
-                    None
-                }
+            if val.is_error() {
+                return val;
             }
+            env.set(id.get_id(), val);
+            Object::Null
         },
         _ => {
-            panic!()
+            Object::Error(format!("Statement not suported: {}", stmt.to_string()))
         }
     }
 }
 
-fn eval_expr(expr: &Expression, env: & mut Environment) -> Option<Object> {
+fn eval_expr(expr: &Expression, env: & mut Environment) -> Object {
     match expr {
         Expression::IntegerExpression(content) =>
             {
-                Some(Object::IntegerObject(content.clone()))
+                Object::IntegerObject(content.clone())
             },
         Expression::BoolExpression(content) =>
             {
-                Some(Object::BooleanObject(content.clone()))
+                Object::BooleanObject(content.clone())
             },
         Expression::StringExpression(content) => {
-            Some(Object::StringObject(content.clone()))
+            Object::StringObject(content.clone())
         }
         Expression::PrefixExpression(tok, right) =>
             {
@@ -115,10 +100,13 @@ fn eval_expr(expr: &Expression, env: & mut Environment) -> Option<Object> {
             {
                 let right = eval_expr(right.as_ref(), env);
                 let left = eval_expr(left.as_ref(), env);
-                if left.is_none() || right.is_none() {
-                    return None;
+                if left.is_error() {
+                    return left;
                 }
-                Some(eval_infix_expr(right.unwrap(), left.unwrap(), tok))
+                if right.is_error() {
+                    return right;
+                }
+                eval_infix_expr(right, left, tok)
             },
         Expression::IfExpression(content) =>
             {
@@ -126,28 +114,28 @@ fn eval_expr(expr: &Expression, env: & mut Environment) -> Option<Object> {
             },
         Expression::IdentifierExpression(id) =>
             {
-                Some(eval_identifier(id, env))
+                eval_identifier(id, env)
             },
         Expression::FnExpression(content) => {
-            Some(Object::Function(FunctionStruct::new(content.params.clone(),content.body.clone(), env.clone())))
+            Object::Function(FunctionStruct::new(content.params.clone(),content.body.clone(), env.clone()))
         },
         Expression::CallExpression(content) => {
-           let function =  eval(Node::Expression(content.function.as_ref().clone()), env).expect("Couldn't parse function");
+           let function =  eval(Node::Expression(content.function.as_ref().clone()), env);
             if let Object::Error(_) = &function {
-                return Some(function);
+                return function;
             }
             let args = eval_expressions(content.args.clone(), env);
             if args.len() == 1 {
                 if let Object::Error(_) = &args[0] {
-                    return Some(args[0].clone());
+                    return args[0].clone();
                 }
             }
 
-            Some(apply_function(function, args))
+            apply_function(function, args)
 
         }
         _ => {
-            None
+            Object::Error(format!("Expression not suported: {}", expr.to_string()))
         }
     }
 }
@@ -164,7 +152,11 @@ fn apply_function(function: Object, args: Vec<Object>) -> Object
 {
     if let Object::Function(content) = function {
         let mut exp_env = extend_function_env(&content, args);
-        let evaluated = eval(Node::StatementBlock(content.body), & mut exp_env).expect("couldn't parse functions body");
+        let evaluated = eval(Node::StatementBlock(content.body), & mut exp_env);
+        if evaluated.is_error()
+        {
+            return evaluated;
+        }
         return unwrap_return_value(evaluated);
     }
     Object::Error(format!("Not a function {}", function.get_type()))
@@ -182,12 +174,10 @@ fn eval_expressions(exprs: Vec<Expression>, env: & mut Environment) -> Vec<Objec
     let mut result = Vec::new();
     for expr in exprs {
         let evaluated = eval(Node::Expression(expr), env);
-        if let Some(content) = evaluated {
-            if let Object::Error(_) = content {
-                return vec![content.clone()];
-            }
-            result.push(content);
+        if let Object::Error(_) = evaluated {
+            return vec![evaluated.clone()];
         }
+        result.push(evaluated);
     }
     result
 }
@@ -197,45 +187,43 @@ fn eval_identifier(id: &Identifier, env: & mut Environment) -> Object
     env.get(id.get_id())
 }
 
-fn eval_prefix_expr(tok:&Token, right: Option<Object>) -> Option<Object>
+fn eval_prefix_expr(tok:&Token, right: Object) -> Object
 {
-    if let Some(right_content) = right {
-        match tok {
-            Token::BANG =>
-                {
-                    Some(eval_bang_operator(right_content))
-                },
-            Token::MINUS =>
-                {
-                    Some(eval_minus_operator(right_content))
-                },
-            _ => {
-                Some(Object::Error(format!("unknown operator: {}", tok.get_type())))
+    match tok {
+        Token::BANG =>
+            {
+                eval_bang_operator(right)
+            },
+        Token::MINUS =>
+            {
+                eval_minus_operator(right)
+            },
+        _ => {
+                Object::Error(format!("unknown operator: {}", tok.get_type()))
             }
-        }
-    }
-    else {
-        None
     }
 }
 
-fn eval_if_expr(if_struct: IfStruct, env: & mut Environment) -> Option<Object>
+fn eval_if_expr(if_struct: IfStruct, env: & mut Environment) -> Object
 {
     let condition = eval(Node::Expression(if_struct.condition.as_ref().clone()), env);
-    if let Some(condition) = condition {
-        if is_true(condition)
-        {
-            return eval(Node::StatementBlock(if_struct.consequence), env);
+    if condition.is_error() {
+        return condition;
+    }
+    if is_true(condition)
+    {
+        eval(Node::StatementBlock(if_struct.consequence), env)
+    }
+    else
+    {
+        if let Some(alternative) = if_struct.alternative {
+            eval(Node::StatementBlock(alternative), env)
         }
-        else {
-            if let Some(alternative) = if_struct.alternative
-            {
-                return eval(Node::StatementBlock(alternative), env);
-            }
-            return Some(Object::Null);
+        else
+        {
+            Null
         }
     }
-    return None;
 }
 
 fn is_true(object: Object) -> bool {

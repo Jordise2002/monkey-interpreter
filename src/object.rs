@@ -65,6 +65,15 @@ impl Object {
             }
         }
     }
+
+    pub fn is_error(&self) -> bool {
+        if let Object::Error(_) = self {
+            true
+        }
+        else {
+            false
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -83,7 +92,8 @@ impl FunctionStruct {
             env
         }
     }
-    fn inspect(&self) -> String {
+
+    pub fn inspect(&self) -> String {
         let mut result = String::from("fn(");
         let x = self.parameters.clone().into_iter().map(|param| param.get_id()).collect::<Vec<String>>();
         result = result + x.join(",").as_str();
@@ -93,5 +103,5 @@ impl FunctionStruct {
         }
         result = result + "}";
         result
-        }
+    }
 }

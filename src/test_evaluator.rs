@@ -36,7 +36,7 @@ fn test_eval(input: String) -> Option<Object> {
     let mut parser = Parser::new(lexer);
     let program = parser.parse_program();
     let mut env = Environment::new();
-    eval(Node::Program(program), & mut env)
+    Some(eval(Node::Program(program), & mut env))
 }
 
 #[test]

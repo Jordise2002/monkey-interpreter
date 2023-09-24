@@ -33,13 +33,11 @@ pub fn start() {
         }
 
         let evaluated = eval(Node::Program(program),& mut env);
-        if let Some(evl) = evaluated {
-            if let Object::Null = &evl
-            {
-                continue;
-            }
-            println!("{}", evl.inspect());
+        if let Object::Null = &evaluated
+        {
+            continue;
         }
+        println!("{}", evaluated.inspect());
 
     }
 }
