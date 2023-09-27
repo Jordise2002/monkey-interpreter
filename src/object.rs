@@ -2,7 +2,7 @@ use strum_macros::IntoStaticStr;
 use crate::ast::{Identifier, Statement};
 use crate::environment::Environment;
 
-#[derive(Debug, PartialEq, Clone, IntoStaticStr)]
+#[derive(Debug, PartialEq, Clone,IntoStaticStr)]
 pub enum Object {
     IntegerObject(i64),
     BooleanObject(bool),
@@ -10,6 +10,7 @@ pub enum Object {
     ReturnValue(Box<Object>),
     Error(String),
     Function(FunctionStruct),
+    BuiltIn(BuiltInFn),
     Null
 }
 
@@ -36,6 +37,9 @@ impl Object {
             },
             Object::Function(content) => {
                 content.inspect()
+            },
+            Object::BuiltIn(_) => {
+                "Built In".to_string()
             }
         }
     }
@@ -62,6 +66,9 @@ impl Object {
             }
             Object::Function(_) => {
                 "FUNCTION TYPE"
+            }
+            Object::BuiltIn(_) => {
+                "BUILT IN FUNCTION"
             }
         }
     }
@@ -105,3 +112,9 @@ impl FunctionStruct {
         result
     }
 }
+
+pub type BuiltInFn = fn(Vec<Object>) -> Object;
+
+
+
+

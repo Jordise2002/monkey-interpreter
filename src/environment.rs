@@ -24,11 +24,11 @@ impl Environment {
         }
     }
 
-    pub fn get(&self,name: String) -> Object {
+    pub fn get(&self,name: String) -> Option<Object> {
         let result = self.map.get(name.as_str());
         match result {
             Some(content) => {
-                content.clone()
+                Some(content.clone())
             },
             None => {
                 if let Some(env) = &self.superior {
@@ -36,7 +36,7 @@ impl Environment {
                 }
                 else
                 {
-                    Object::Error(format!("identifier not found: {}", name))
+                    None
                 }
             }
         }

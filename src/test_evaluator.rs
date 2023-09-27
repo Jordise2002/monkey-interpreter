@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use crate::ast::Node;
 use crate::environment::Environment;
 use crate::evaluator::eval;
@@ -201,4 +202,18 @@ fn test_function_application() {
         }
     }
 
+}
+
+#[test]
+fn test_len_function() {
+    let inputs = vec![
+        ("len(\"hola\")",IntegerObject(4)),
+        ("len(\"\")", IntegerObject(0)),
+        ("len(1)", Object::Error("not suported type: INTEGER".to_string())),
+        ("len(\"one\", \"two\")", Object::Error("wrong number of arguments: got = 2, want = 1".to_string()))
+    ];
+
+    for input in inputs {
+        assert_eq!(test_eval(input.0.to_string()).expect("Couldn't eval"), input.1);
+    }
 }

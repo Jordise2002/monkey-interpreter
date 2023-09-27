@@ -84,88 +84,89 @@ impl Lexer {
 
     pub fn next_token(& mut self) -> Token
     {
-        let mut tok = Token::ILLEGAL;
+
 
         self.skip_withespace();
 
-        match self.ch
+        let tok = match self.ch
         {
             '=' => {
                 if self.peek_char() == '='
                 {
-                    tok = Token::EQ;
                     self.read_char();
+                    Token::EQ
+
                 }
                 else
                 {
-                    tok = Token::ASSIGN;
+                    Token::ASSIGN
                 }
             },
             ';' => {
-                tok = Token::SEMICOLON;
+                Token::SEMICOLON
             },
             '(' => {
-                tok = Token::LPAREN;
+                Token::LPAREN
             },
             ')' => {
-                tok = Token::RPAREN;
+                Token::RPAREN
             },
             ',' => {
-                tok = Token::COMMA;
+                Token::COMMA
             },
             '+' => {
-                tok = Token::PLUS;
+                Token::PLUS
             },
             '-' => {
-                tok = Token::MINUS;
+                Token::MINUS
             },
             '!' => {
                 if self.peek_char() == '='
                 {
-                    tok = Token::NotEq;
                     self.read_char();
+                    Token::NotEq
                 }
                 else
                 {
-                    tok = Token::BANG;
+                    Token::BANG
                 }
             },
             '*' => {
-                tok = Token::ASTERISK;
+                Token::ASTERISK
             },
             '/' => {
-                tok = Token::SLASH;
+                Token::SLASH
             },
             '<' => {
-                tok = Token::LT;
+                Token::LT
             },
             '>' => {
-                tok = Token::GT;
+                Token::GT
             }
             '{' => {
-                tok = Token::LBRACE;
+                Token::LBRACE
             },
             '}' => {
-                tok = Token::RBRACE;
+                Token::RBRACE
             }
             '\0' => {
-                tok = Token::EOF;
+                Token::EOF
             }
             '"' => {
-                tok = self.read_string()
+                self.read_string()
             }
             _ =>
             {
                 if self.ch.is_ascii_alphabetic() {
-                    tok = token::look_up_token(self.read_identifier());
+                    let tok = token::look_up_token(self.read_identifier());
                     return tok;
                 }
                 else if self.ch.is_ascii_digit(){
-                    tok = Token::INT(self.read_number());
+                    let tok = Token::INT(self.read_number());
                     return tok;
                 }
                 else {
-                    tok = Token::ILLEGAL;
+                    let tok = Token::ILLEGAL;
                     return tok;
                 }
             }

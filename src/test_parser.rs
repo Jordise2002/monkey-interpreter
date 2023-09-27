@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use crate::ast::{Expression, Identifier, Statement};
 use crate::ast::Expression::IdentifierExpression;
 use crate::ast::Statement::ExpressionStatement;
@@ -262,7 +263,7 @@ fn test_parsing_infix_expr() {
         assert_eq!(program.statements.len(), 1);
         let stmt = &program.statements[0];
         if let ExpressionStatement(expr) = stmt {
-            if let Expression::InfixExpression(right, tok, left) = expr
+            if let Expression::InfixExpression(right, tok, _left) = expr
                 {
                     assert_eq!(tok.clone(), toks[i]);
                     assert_eq!(right.to_string(), "5");

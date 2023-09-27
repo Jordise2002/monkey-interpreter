@@ -5,7 +5,6 @@ use crate::evaluator::eval;
 use crate::lexer::Lexer;
 use crate::object::Object;
 use crate::parser::Parser;
-use crate::token::Token;
 
 const PROMPT: &str = ">>";
 pub fn start() {

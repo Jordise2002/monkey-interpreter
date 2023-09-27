@@ -2,7 +2,7 @@ use crate::token::Token;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Node {
-    Statement(Statement),
+    //Statement(Statement),
     Program(Program),
     Expression(Expression),
     StatementBlock(Vec<Statement>)
@@ -13,6 +13,7 @@ pub struct Program{
     pub statements: Vec<Statement>
 }
 
+#[allow(dead_code)]
 impl Program {
     pub fn new() -> Self {
         Program {

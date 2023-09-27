@@ -1,5 +1,3 @@
-use std::fmt::Alignment::Right;
-use std::fs::FileType;
 use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct};
 use crate::lexer::Lexer;
 use crate::parser::Precedence::Lowest;
@@ -86,10 +84,6 @@ impl Parser{
 
     fn peek_precedence(&self) -> Precedence{
         Precedence::get_precendence(&self.peek_token)
-    }
-
-    fn cur_precedence(&self) -> Precedence {
-        Precedence::get_precendence(&self.cur_token)
     }
 
     fn peek_token(&mut self, token: Token) -> bool

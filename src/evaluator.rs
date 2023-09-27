@@ -1,5 +1,5 @@
-use std::fmt::format;
-use crate::ast::{Expression, Identifier, IfStruct, Node, Program, Statement};
+use crate::ast::{Expression, Identifier, IfStruct, Node,Statement};
+use crate::builtins::get_built_in;
 use crate::environment::Environment;
 use crate::object::{FunctionStruct, Object};
 use crate::object::Object::{Null, ReturnValue};
@@ -10,9 +10,9 @@ pub fn eval(node: Node, env: & mut Environment) -> Object {
         Node::Program(prog) => {
             eval_program(prog.statements, env)
         },
-        Node::Statement(stmt) => {
+        /*Node::Statement(stmt) => {
             eval_statement(stmt, env)
-        },
+        },*/
         Node::Expression(expr) => {
             eval_expr(&expr, env)
         },
@@ -70,11 +70,9 @@ fn eval_statement(stmt: Statement, env: & mut Environment) -> Object
                 return val;
             }
             env.set(id.get_id(), val);
-            Object::Null
+            Null
         },
-        _ => {
-            Object::Error(format!("Statement not suported: {}", stmt.to_string()))
-        }
+
     }
 }
 
@@ -159,6 +157,9 @@ fn apply_function(function: Object, args: Vec<Object>) -> Object
         }
         return unwrap_return_value(evaluated);
     }
+    else if let Object::BuiltIn(content) = function {
+        return content(args);
+    }
     Object::Error(format!("Not a function {}", function.get_type()))
 }
 
@@ -184,7 +185,17 @@ fn eval_expressions(exprs: Vec<Expression>, env: & mut Environment) -> Vec<Objec
 
 fn eval_identifier(id: &Identifier, env: & mut Environment) -> Object
 {
-    env.get(id.get_id())
+
+    if let Some(content) = env.get(id.get_id())
+    {
+        content.clone()
+    }
+    else if let Some(content) = get_built_in(id.get_id()){
+        content.clone()
+    }
+    else {
+        Object::Error(format!("identifier not found: {}", id.get_id()))
+    }
 }
 
 fn eval_prefix_expr(tok:&Token, right: Object) -> Object
