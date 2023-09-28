@@ -1,8 +1,8 @@
-use crate::ast::{Expression, Identifier, IfStruct, Node,Statement};
+use crate::ast::{Expression, Identifier, IfStruct, IndexStruct, Node, Statement};
 use crate::builtins::get_built_in;
 use crate::environment::Environment;
 use crate::object::{FunctionStruct, Object};
-use crate::object::Object::{Null, ReturnValue};
+use crate::object::Object::{IntegerObject, Null, ReturnValue};
 use crate::token::Token;
 
 pub fn eval(node: Node, env: & mut Environment) -> Object {
@@ -10,9 +10,6 @@ pub fn eval(node: Node, env: & mut Environment) -> Object {
         Node::Program(prog) => {
             eval_program(prog.statements, env)
         },
-        /*Node::Statement(stmt) => {
-            eval_statement(stmt, env)
-        },*/
         Node::Expression(expr) => {
             eval_expr(&expr, env)
         },
@@ -76,6 +73,31 @@ fn eval_statement(stmt: Statement, env: & mut Environment) -> Object
     }
 }
 
+fn eval_index_expression(index: &IndexStruct, env: & mut Environment) -> Object
+{
+    let array = eval_expr(index.left.as_ref(), env);
+    if let Object::Array(content) = array
+    {
+        let inner = eval_expr(index.index.as_ref(), env);
+        if let IntegerObject(i) = inner {
+            if let Some(object_value) = content.get(i as usize)
+            {
+                *object_value.clone()
+            }
+            else
+            {
+                Object::Error(format!("asked for index {} in an array with len {}", i, content.len()))
+            }
+        }
+        else {
+            Object::Error(format!("type {} can not work as an index", inner.get_type()))
+        }
+    }
+    else {
+        Object::Error(format!("the type {} is not indexable", array.get_type()))
+    }
+}
+
 fn eval_expr(expr: &Expression, env: & mut Environment) -> Object {
     match expr {
         Expression::IntegerExpression(content) =>
@@ -131,7 +153,23 @@ fn eval_expr(expr: &Expression, env: & mut Environment) -> Object {
 
             apply_function(function, args)
 
-        }
+        },
+        Expression::ArrayLiteral(content) => {
+            let mut element_vec = Vec::new();
+            for element in &content.elements {
+                let object = eval_expr(element, env);
+                if object.is_error()
+                {
+                    return object;
+                }
+                element_vec.push(Box::new(object));
+            }
+            Object::Array(element_vec)
+        },
+        Expression::IndexExpression(content) =>
+            {
+                eval_index_expression(content, env)
+            }
         _ => {
             Object::Error(format!("Expression not suported: {}", expr.to_string()))
         }

@@ -11,6 +11,7 @@ pub enum Object {
     Error(String),
     Function(FunctionStruct),
     BuiltIn(BuiltInFn),
+    Array(Vec<Box<Object>>),
     Null
 }
 
@@ -26,6 +27,11 @@ impl Object {
             Object::BooleanObject(content) => {
                 content.to_string()
             },
+            Object::Array(content) => {
+                let mut result = "[".to_string();
+                result = result + content.clone().into_iter().map(| arg | arg.as_ref().inspect()).collect::<Vec<String>>().join(",").as_str() + "]";
+                result
+            }
             Object::ReturnValue(content) => {
                 content.inspect()
             }
@@ -51,6 +57,9 @@ impl Object {
             },
             Object::StringObject(_) => {
                 "STRING"
+            },
+            Object::Array(_) => {
+                "ARRAY"
             }
             Object::BooleanObject(_) => {
                 "BOOLEAN"

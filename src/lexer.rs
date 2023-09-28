@@ -146,6 +146,12 @@ impl Lexer {
             '{' => {
                 Token::LBRACE
             },
+            '[' => {
+                Token::LBRACKET
+            },
+            ']' => {
+                Token::RBRACKET
+            }
             '}' => {
                 Token::RBRACE
             }

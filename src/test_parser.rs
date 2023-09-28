@@ -376,9 +376,9 @@ fn test_group_expressions() {
         let program = parser.parse_program();
         for stmt in program.statements
         {
-            eprintln!("{}", stmt.to_string());
+
         }
-        eprintln!();
+
     }
 }
 
@@ -461,4 +461,25 @@ fn test_call_expression() {
     else {
         panic!("Expected expression statement")
     }
+}
+
+#[test]
+fn test_array_literal() {
+    let input = "[1,2,3];";
+    let lexer = Lexer::new(input.to_string());
+    let mut parser = Parser::new(lexer);
+    let program = parser.parse_program();
+    assert_eq!(1, program.statements.len());
+    assert_eq!(program.statements[0].to_string(), "[1,2,3];");
+}
+
+#[test]
+fn test_index_literal()
+{
+    let input = "array[1 + 2];array[3];";
+    let lexer = Lexer::new(input.to_string());
+    let mut parser = Parser::new(lexer);
+    let program = parser.parse_program();
+    assert_eq!(2, program.statements.len());
+    assert_eq!(program.statements[0].to_string(), "array[(1 PLUS 2)];");
 }

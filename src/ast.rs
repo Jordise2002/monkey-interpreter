@@ -65,6 +65,8 @@ pub enum Expression {
     FnExpression(FnStruct),
     CallExpression(CallStruct),
     StringExpression(String),
+    ArrayLiteral(ArrayStruct),
+    IndexExpression(IndexStruct),
     None
 }
 
@@ -97,8 +99,14 @@ impl Expression {
             },
             Expression::CallExpression(content) => {
                 content.to_string()
+            },
+            Expression::ArrayLiteral(content) => {
+                content.to_string()
+            },
+            Expression::IndexExpression(content) => {
+                content.to_string()
             }
-            _ => {
+            Expression::None => {
                 String::from("None")
             }
         }
@@ -179,6 +187,34 @@ impl CallStruct {
         let mut result = self.function.to_string();
         let arg_list = self.args.clone().into_iter().map(|arg | arg.to_string()).collect::<Vec<String>>().join(",");
         result = result + "(" + arg_list.as_str() + ")";
+        result
+    }
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct ArrayStruct {
+    pub elements: Vec<Expression>
+}
+
+impl ArrayStruct {
+    pub fn to_string(&self) -> String {
+        let mut result = "[".to_string();
+        let element_list = self.elements.clone().into_iter().map(| arg | arg.to_string()).collect::<Vec<String>>().join(",");
+        result = result + element_list.as_str() + "]";
+        result
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct IndexStruct {
+    pub left: Box<Expression>,
+    pub index: Box<Expression>
+}
+
+impl IndexStruct {
+    pub fn to_string(&self) -> String {
+        let mut result = self.left.to_string();
+        result = result + "[" + self.index.to_string().as_str() + "]";
         result
     }
 }

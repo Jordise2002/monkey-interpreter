@@ -1,4 +1,4 @@
-use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct};
+use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct, ArrayStruct, IndexStruct};
 use crate::lexer::Lexer;
 use crate::parser::Precedence::Lowest;
 use crate::token::Token;
@@ -10,7 +10,8 @@ pub enum Precedence{
     Sum = 3,
     Product = 4,
     Prefix = 5,
-    Call = 6
+    Call = 6,
+    Index = 7
 }
 
 impl Precedence {
@@ -43,6 +44,9 @@ impl Precedence {
             Token::LPAREN => {
                 Precedence::Call
             },
+            Token::LBRACKET => {
+                Precedence::Index
+            }
             _ => {
                 Precedence::Lowest
             }
@@ -313,6 +317,57 @@ impl Parser{
         }
     }
 
+    fn parse_expression_list(&mut self) -> Option<Vec<Expression>>
+    {
+        let mut args = Vec::new();
+
+        if self.peek_token == Token::RBRACKET {
+            self.next_token();
+            return Some(args);
+        }
+
+        self.next_token();
+        args.push(self.parse_expr(Lowest));
+
+        while self.peek_token == Token::COMMA {
+            self.next_token();
+            self.next_token();
+            args.push(self.parse_expr(Lowest));
+        }
+
+        if !self.peek_token(Token::RBRACKET)
+        {
+            return None;
+        }
+        Some(args)
+    }
+    fn parse_array_literal(&mut self) -> Option<Expression>
+    {
+        if let Some(content) = self.parse_expression_list()
+        {
+            Some(Expression::ArrayLiteral(ArrayStruct{ elements: content}))
+        }
+        else {
+            None
+        }
+    }
+
+    fn parse_index_expr(&mut self, left: Expression) -> Option<Expression>
+    {
+        self.next_token();
+        let index = self.parse_expr(Lowest);
+
+        if !self.peek_token(Token::RBRACKET)
+        {
+            self.next_token();
+            None
+        }
+        else {
+            self.next_token();
+            Some(Expression::IndexExpression(IndexStruct{left: Box::new(left), index: Box::new(index) }))
+        }
+    }
+
     fn parse_expr(& mut self, prec: Precedence) -> Expression
     {
 
@@ -356,7 +411,11 @@ impl Parser{
             Token::MINUS =>
                 {
                     self.parse_prefix_expr()
-            }
+            },
+            Token::LBRACKET =>
+                {
+                    self.parse_array_literal().expect("Couldn't parse array literal")
+                }
             _ => {
                 return Expression::None;
             }
@@ -374,6 +433,10 @@ impl Parser{
                 Token::LPAREN => {
                     self.next_token();
                     self.parse_call_expr(expr).expect("Couldn't parse call expression")
+                },
+                Token::LBRACKET => {
+                    self.next_token();
+                    self.parse_index_expr(expr).expect("Couldn't parse index expression")
                 }
                 Token::SLASH => {
                     self.next_token();
