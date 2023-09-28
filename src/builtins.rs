@@ -22,6 +22,9 @@ fn len(args: Vec<Object>) -> Object {
         if let Object::StringObject(content) = &args[0] {
             Object::IntegerObject(content.len() as i64)
         }
+        else if let Object::Array(content) = &args[0] {
+            Object::IntegerObject(content.len() as i64)
+        }
         else {
             Object::Error(format!("not suported type: {}", args[0].get_type()))
         }

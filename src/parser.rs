@@ -359,11 +359,9 @@ impl Parser{
 
         if !self.peek_token(Token::RBRACKET)
         {
-            self.next_token();
             None
         }
         else {
-            self.next_token();
             Some(Expression::IndexExpression(IndexStruct{left: Box::new(left), index: Box::new(index) }))
         }
     }
