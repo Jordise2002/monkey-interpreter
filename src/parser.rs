@@ -1,7 +1,10 @@
-use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct, ArrayStruct, IndexStruct};
+use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct, ArrayStruct, IndexStruct, HashStruct};
 use crate::lexer::Lexer;
+use crate::object::Object;
 use crate::parser::Precedence::Lowest;
 use crate::token::Token;
+use crate::token::Token::{COMMA, RBRACE};
+
 #[derive(Copy, Clone, Debug)]
 pub enum Precedence{
     Lowest = 0,
@@ -11,7 +14,8 @@ pub enum Precedence{
     Product = 4,
     Prefix = 5,
     Call = 6,
-    Index = 7
+    Index = 7,
+    Hash = 8
 }
 
 impl Precedence {
@@ -46,6 +50,9 @@ impl Precedence {
             },
             Token::LBRACKET => {
                 Precedence::Index
+            }
+            Token::SEMICOLON => {
+                Precedence::Hash
             }
             _ => {
                 Precedence::Lowest
@@ -366,6 +373,32 @@ impl Parser{
         }
     }
 
+    fn parse_hash_expr(&mut self) -> Option<Expression>
+    {
+        let mut result = HashStruct::new();
+        while self.peek_token != Token::RBRACE
+        {
+            self.next_token();
+            let key = self.parse_expr(Lowest);
+            if !self.peek_token(Token::COLON)
+            {
+                return None;
+            }
+            self.next_token();
+            let value = self.parse_expr(Lowest);
+            result.pairs.push((key.clone(), value.clone()));
+            if self.peek_token != RBRACE && !self.peek_token(COMMA)
+            {
+                return None;
+            }
+        }
+        if !self.peek_token(Token::RBRACE)
+        {
+            return None;
+        }
+        Some(Expression::HashExpression(result))
+    }
+
     fn parse_expr(& mut self, prec: Precedence) -> Expression
     {
 
@@ -413,6 +446,10 @@ impl Parser{
             Token::LBRACKET =>
                 {
                     self.parse_array_literal().expect("Couldn't parse array literal")
+                }
+            Token::LBRACE =>
+                {
+                    self.parse_hash_expr().expect("Couldn't parse hash literal")
                 }
             _ => {
                 return Expression::None;

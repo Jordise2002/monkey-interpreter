@@ -1,9 +1,12 @@
-use crate::ast::{Expression, Identifier, IfStruct, IndexStruct, Node, Statement};
+use std::collections::hash_map::DefaultHasher;
+use crate::ast::{Expression, HashStruct, Identifier, IfStruct, IndexStruct, Node, Statement};
 use crate::builtins::get_built_in;
 use crate::environment::Environment;
 use crate::object::{FunctionStruct, Object};
 use crate::object::Object::{IntegerObject, Null, ReturnValue};
 use crate::token::Token;
+use std::collections::HashMap;
+use std::hash::Hash;
 
 pub fn eval(node: Node, env: & mut Environment) -> Object {
     match node {
@@ -73,28 +76,81 @@ fn eval_statement(stmt: Statement, env: & mut Environment) -> Object
     }
 }
 
-fn eval_index_expression(index: &IndexStruct, env: & mut Environment) -> Object
+fn eval_hash_expr(hash: &HashStruct, env: & mut Environment) -> Object
 {
-    let array = eval_expr(index.left.as_ref(), env);
-    if let Object::Array(content) = array
+    let mut map = HashMap::new();
+    for (key, value) in &hash.pairs
     {
-        let inner = eval_expr(index.index.as_ref(), env);
-        if let IntegerObject(i) = inner {
-            if let Some(object_value) = content.get(i as usize)
-            {
-                *object_value.clone()
-            }
-            else
-            {
-                Object::Error(format!("asked for index {} in an array with len {}", i, content.len()))
-            }
+        let key = eval_expr(&key, env);
+        if key.is_error()
+        {
+            return key;
         }
-        else {
-            Object::Error(format!("type {} can not work as an index", inner.get_type()))
+        if !key.is_hashable()
+        {
+            return Object::Error(format!("type {} is not hashable", key.get_type()));
+        }
+        let value = eval_expr(&value, env);
+        if value.is_error()
+        {
+            return value;
+        }
+        map.insert(key, value);
+    }
+    Object::HashMap(map)
+}
+
+fn eval_array_index_expression(left: Vec<Box<Object>>, right: &Expression, env: & mut Environment) -> Object
+{
+    let inner = eval_expr(&right, env);
+    if let IntegerObject(i) = inner {
+        if let Some(object_value) = left.get(i as usize)
+        {
+            *object_value.clone()
+        }
+        else
+        {
+            Object::Error(format!("asked for index {} in an array with len {}", i, left.len()))
         }
     }
     else {
-        Object::Error(format!("the type {} is not indexable", array.get_type()))
+        Object::Error(format!("type {} can not work as an index", inner.get_type()))
+    }
+}
+fn eval_hash_index_expression(left: Object, index: &Expression, env: & mut Environment) -> Object
+{
+    if let Object::HashMap(map) = &left
+    {
+        let index = eval_expr(index, env);
+        if index.is_error()
+        {
+            return index;
+        }
+        if !index.is_hashable()
+        {
+            return Object::Error(format!("type {} is not hashable", index.get_type()));
+        }
+        if let Some(content) = map.get(&index)
+        {
+            return content.clone();
+        }
+        return Object::Error(format!("no match for {} found in {}", index.inspect(), left.inspect()))
+    }
+    panic!()
+}
+fn eval_index_expression(index: &IndexStruct, env: & mut Environment) -> Object
+{
+    let left = eval_expr(index.left.as_ref(), env);
+    if let Object::Array(content) = left
+    {
+        eval_array_index_expression(content, index.index.as_ref(), env)
+    }
+    else if let Object::HashMap(_) = &left
+    {
+        eval_hash_index_expression(left, index.index.as_ref(), env)
+    }
+    else {
+        Object::Error(format!("the type {} is not indexable", left.get_type()))
     }
 }
 
@@ -169,6 +225,10 @@ fn eval_expr(expr: &Expression, env: & mut Environment) -> Object {
         Expression::IndexExpression(content) =>
             {
                 eval_index_expression(content, env)
+            },
+        Expression::HashExpression(content) =>
+            {
+                eval_hash_expr(content, env)
             }
         _ => {
             Object::Error(format!("Expression not suported: {}", expr.to_string()))
@@ -433,3 +493,4 @@ fn eval_bool_infix_expr(right: bool, left: bool, tok: &Token) -> Object
         }
     }
 }
+

@@ -1,3 +1,5 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hash;
 #[allow(dead_code)]
 use crate::ast::{Expression, Identifier, Statement};
 use crate::ast::Expression::IdentifierExpression;
@@ -482,4 +484,21 @@ fn test_index_literal()
     let program = parser.parse_program();
     assert_eq!(2, program.statements.len());
     assert_eq!(program.statements[0].to_string(), "array[(1 PLUS 2)];");
+}
+
+#[test]
+fn test_hash_literal() {
+    let input = "{2: 3, 3: 2}";
+    let lexer = Lexer::new(input.to_string());
+    let mut parser = Parser::new(lexer);
+    let program = parser.parse_program();
+    assert_eq!(1, program.statements.len());
+    assert_eq!(program.statements[0].to_string(), "{2:3,3:2};");
+}
+
+#[test]
+fn hash_string()
+{
+    let mut state = DefaultHasher::new();
+    assert_eq!("hola".to_string().hash(& mut state), "hola".to_string().hash(& mut state))
 }

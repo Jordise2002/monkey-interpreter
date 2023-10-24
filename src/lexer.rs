@@ -131,6 +131,9 @@ impl Lexer {
                     Token::BANG
                 }
             },
+            ':' => {
+                Token::COLON
+            }
             '*' => {
                 Token::ASTERISK
             },

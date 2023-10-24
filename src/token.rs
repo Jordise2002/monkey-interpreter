@@ -1,6 +1,6 @@
 use phf::phf_map;
 use strum_macros::IntoStaticStr;
-#[derive(PartialEq, Debug, Clone, IntoStaticStr)]
+#[derive(PartialEq, Debug, Clone, IntoStaticStr, Hash)]
 pub enum Token{
     EMPTY,
     ILLEGAL,
@@ -24,6 +24,7 @@ pub enum Token{
 
     COMMA,
     SEMICOLON,
+    COLON,
 
     LPAREN,
     RPAREN,

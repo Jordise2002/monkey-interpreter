@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::token::Token;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -67,6 +68,7 @@ pub enum Expression {
     StringExpression(String),
     ArrayLiteral(ArrayStruct),
     IndexExpression(IndexStruct),
+    HashExpression(HashStruct),
     None
 }
 
@@ -104,6 +106,9 @@ impl Expression {
                 content.to_string()
             },
             Expression::IndexExpression(content) => {
+                content.to_string()
+            },
+            Expression::HashExpression(content) => {
                 content.to_string()
             }
             Expression::None => {
@@ -215,6 +220,31 @@ impl IndexStruct {
     pub fn to_string(&self) -> String {
         let mut result = self.left.to_string();
         result = result + "[" + self.index.to_string().as_str() + "]";
+        result
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct HashStruct {
+    pub pairs: Vec<(Expression, Expression)>
+}
+
+impl HashStruct
+{
+    pub fn new() -> Self {
+        HashStruct {
+            pairs: Vec::new()
+        }
+    }
+
+    pub fn to_string(&self) -> String{
+        let mut result = "{".to_string();
+        let mut pairs = Vec::new();
+        for pair in &self.pairs
+        {
+            pairs.push(pair.0.to_string() + ":" + pair.1.to_string().as_str())
+        }
+        result = result + pairs.join(",").as_str() + "}";
         result
     }
 }

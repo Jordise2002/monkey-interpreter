@@ -1,6 +1,8 @@
 use strum_macros::IntoStaticStr;
 use crate::ast::{Identifier, Statement};
 use crate::environment::Environment;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, PartialEq, Clone,IntoStaticStr)]
 pub enum Object {
@@ -12,7 +14,31 @@ pub enum Object {
     Function(FunctionStruct),
     BuiltIn(BuiltInFn),
     Array(Vec<Box<Object>>),
+    HashMap(HashMap<Object, Object>),
     Null
+}
+
+impl Eq for Object {}
+
+impl Hash for Object
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self
+        {
+            Object::IntegerObject(content) => {
+                content.hash(state)
+            },
+            Object::BooleanObject(content) => {
+                content.hash(state)
+            },
+            Object::StringObject(content) => {
+                content.hash(state)
+            }
+            _ => {
+                "".hash(state)
+            }
+        }
+    }
 }
 
 impl Object {
@@ -46,6 +72,9 @@ impl Object {
             },
             Object::BuiltIn(_) => {
                 "Built In".to_string()
+            },
+            Object::HashMap(_) => {
+                "HashMap".to_string()
             }
         }
     }
@@ -79,6 +108,9 @@ impl Object {
             Object::BuiltIn(_) => {
                 "BUILT IN FUNCTION"
             }
+            Object::HashMap(_) => {
+                "HASH MAP"
+            }
         }
     }
 
@@ -88,6 +120,15 @@ impl Object {
         }
         else {
             false
+        }
+    }
+
+    pub fn is_hashable(&self) -> bool {
+        match self {
+            Object::IntegerObject(_) => true,
+            Object::BooleanObject(_) => true,
+            Object::StringObject(_) => true,
+            _ => false
         }
     }
 }
