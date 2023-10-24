@@ -176,6 +176,7 @@ impl Lexer {
                 }
                 else {
                     let tok = Token::ILLEGAL;
+                    self.read_char();
                     return tok;
                 }
             }
