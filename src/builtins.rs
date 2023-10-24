@@ -23,6 +23,10 @@ pub fn get_built_in(id: String) -> Option<Object> {
             {
                 Some(Object::BuiltIn(push))
             }
+        "puts" =>
+            {
+                Some(Object::BuiltIn(puts))
+            }
         _ => {
             None
         }
@@ -122,4 +126,13 @@ fn push(args:Vec<Object>) -> Object
             Object::Error(format!("not suported type: {} in position 0, expected ARRAY", args[0].get_type()))
         }
     }
+}
+
+fn puts(args:Vec<Object>) -> Object
+{
+    for arg in args {
+        print!("{} ",arg.inspect())
+    }
+    print!("\n");
+    Object::Null
 }
