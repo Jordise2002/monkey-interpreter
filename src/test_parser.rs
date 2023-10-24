@@ -289,7 +289,7 @@ fn test_complex_expr() {
 
     let program = parser.parse_program();
     assert_eq!(program.statements.len(), 1);
-    assert_eq!(program.statements[0].to_string(), "((1 PLUS 2) PLUS 3);")
+    assert_eq!(program.statements[0].to_string(), "((1 + 2) + 3);")
 }
 
 fn test_identifier(expr: &Expression, value: &String) -> bool {
@@ -453,8 +453,8 @@ fn test_call_expression() {
             assert_eq!(content.function.to_string().as_str(), "add");
             assert_eq!(content.args.len(), 3);
             assert_eq!(content.args[0].to_string(), "1");
-            assert_eq!(content.args[1].to_string(), "(2 ASTERISK 3)");
-            assert_eq!(content.args[2].to_string(), "(4 PLUS 5)");
+            assert_eq!(content.args[1].to_string(), "(2 * 3)");
+            assert_eq!(content.args[2].to_string(), "(4 + 5)");
         }
         else {
             panic!("Expected call expression");
@@ -483,7 +483,7 @@ fn test_index_literal()
     let mut parser = Parser::new(lexer);
     let program = parser.parse_program();
     assert_eq!(2, program.statements.len());
-    assert_eq!(program.statements[0].to_string(), "array[(1 PLUS 2)];");
+    assert_eq!(program.statements[0].to_string(), "array[(1 + 2)];");
 }
 
 #[test]

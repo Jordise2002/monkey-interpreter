@@ -174,7 +174,7 @@ fn test_function_object() {
         assert_eq!(content.parameters.len(), 1, "parameteres length");
         assert_eq!(content.parameters[0].get_id(), "x");
         assert_eq!(content.body.len(), 1, "body length");
-        assert_eq!(content.body[0].to_string(), "(x PLUS 2);");
+        assert_eq!(content.body[0].to_string(), "(x + 2);");
     }
     else {
         panic!("Expected function object but found otherwise");

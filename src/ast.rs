@@ -88,10 +88,10 @@ impl Expression {
                 content.to_string()
             }
             Expression::PrefixExpression(tok, content) => {
-                tok.get_type().to_string() + content.to_string().as_str()
+                tok.inspect() + content.to_string().as_str()
             }
             Expression::InfixExpression(left, tok, right) => {
-                "(".to_string() + left.to_string().as_str() + " " + tok.get_type() + " " + right.to_string().as_str() + ")"
+                "(".to_string() + left.to_string().as_str() + " " + tok.inspect().as_str() + " " + right.to_string().as_str() + ")"
             },
             Expression::IfExpression(content) => {
                 content.to_string()

@@ -433,7 +433,7 @@ fn eval_string_infix_expr(right: String, left: String, operator: &Token) -> Obje
             Object::StringObject(right + left.as_str())
         },
         _ => {
-            Object::Error(format!("unknown operator: STRING {} STRING", operator.get_type()))
+            Object::Error(format!("unknown operator: STRING {} STRING", operator.inspect()))
         }
     }
 }
