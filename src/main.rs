@@ -12,6 +12,8 @@ mod test_evaluator;
 mod evaluator;
 mod environment;
 mod builtins;
+mod code;
+mod test_code;
 
 fn main() {
     repl::start();
