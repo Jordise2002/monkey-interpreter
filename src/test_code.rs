@@ -1,4 +1,6 @@
 use crate::code::{make, Opcode};
+use crate::code::Opcode::OpConstant;
+use crate::test_compiler::concat_instructions;
 
 #[test]
 fn test_make() {
@@ -19,4 +21,15 @@ fn test_make() {
             assert_eq!(i,e);
         }
     }
+}
+
+#[test]
+fn test_print_code() {
+    let input = vec![make(OpConstant, vec![87]).unwrap(),
+        make(OpConstant, vec![3]).unwrap()];
+    let input = concat_instructions(input);
+    let expected = "0000 OpConstant 87\n0003 OpConstant 3\n";
+    //print!("{}",input.to_string());
+    assert_eq!(input.to_string(), expected);
+
 }

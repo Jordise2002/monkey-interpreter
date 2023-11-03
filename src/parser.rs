@@ -1,6 +1,5 @@
 use crate::ast::{Identifier, Program, Statement, Expression, IfStruct, FnStruct, CallStruct, ArrayStruct, IndexStruct, HashStruct};
 use crate::lexer::Lexer;
-use crate::object::Object;
 use crate::parser::Precedence::Lowest;
 use crate::token::Token;
 use crate::token::Token::{COMMA, RBRACE};

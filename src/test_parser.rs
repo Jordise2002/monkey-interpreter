@@ -376,7 +376,7 @@ fn test_group_expressions() {
         let lexer = Lexer::new(input.to_string());
         let mut parser = Parser::new(lexer);
         let program = parser.parse_program();
-        for stmt in program.statements
+        for _stmt in program.statements
         {
 
         }

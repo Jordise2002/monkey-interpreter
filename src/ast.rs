@@ -1,9 +1,8 @@
-use std::collections::HashMap;
 use crate::token::Token;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Node {
-    //Statement(Statement),
+    Statement(Statement),
     Program(Program),
     Expression(Expression),
     StatementBlock(Vec<Statement>)

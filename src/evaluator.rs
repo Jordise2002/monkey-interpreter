@@ -1,4 +1,3 @@
-use std::collections::hash_map::DefaultHasher;
 use crate::ast::{Expression, HashStruct, Identifier, IfStruct, IndexStruct, Node, Statement};
 use crate::builtins::get_built_in;
 use crate::environment::Environment;
@@ -6,7 +5,6 @@ use crate::object::{FunctionStruct, Object};
 use crate::object::Object::{IntegerObject, Null, ReturnValue};
 use crate::token::Token;
 use std::collections::HashMap;
-use std::hash::Hash;
 
 pub fn eval(node: Node, env: & mut Environment) -> Object {
     match node {
@@ -18,6 +16,9 @@ pub fn eval(node: Node, env: & mut Environment) -> Object {
         },
         Node::StatementBlock(block) => {
             eval_block_statement(block,env)
+        }
+        Node::Statement(stmt) => {
+            eval_statement(stmt, env)
         }
     }
 }

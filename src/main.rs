@@ -13,7 +13,14 @@ mod evaluator;
 mod environment;
 mod builtins;
 mod code;
+#[cfg(test)]
 mod test_code;
+mod compiler;
+#[cfg(test)]
+mod test_compiler;
+#[cfg(test)]
+mod test_vm;
+mod vm;
 
 fn main() {
     repl::start();
