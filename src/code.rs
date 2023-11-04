@@ -26,7 +26,7 @@ impl Display for Instructions
         let mut len = 0;
         let mut output = String::new();
         let mut cursor = Cursor::new(self.content.clone());
-        while cursor.position() < (self.content.len() - 1) as u64
+        while cursor.position() < (self.content.len()) as u64
         {
             let code_value = cursor.read_u8().unwrap();
             let code = Opcode::from_u8(code_value);
@@ -72,7 +72,19 @@ impl Display for Instructions
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, FromPrimitive)]
 pub enum Opcode {
-    OpConstant
+    OpConstant,
+    OpAdd,
+    OpPop,
+    OpSub,
+    OpDiv,
+    OpMul,
+    OpTrue,
+    OpFalse,
+    OpEq,
+    OpNotEq,
+    OpGreaterThan,
+    OpMinus,
+    OpBang
 }
 
 pub struct Definition {
@@ -83,9 +95,45 @@ pub struct Definition {
 pub fn look_up(code: &Opcode) -> Option<Definition>
 {
     match code {
-       _OpConstant => {
+       Opcode::OpConstant => {
             Some(Definition{ name: "OpConstant".to_string(), operand_withs: vec![2]})
         },
+        Opcode::OpAdd => {
+           Some(Definition{name: "OpAdd".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpPop => {
+            Some(Definition{name: "OpPop".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpDiv => {
+            Some(Definition{name: "OpDiv".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpSub => {
+            Some(Definition{name: "OpSub".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpMul => {
+            Some(Definition{name: "OpMul".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpFalse => {
+            Some(Definition{name: "OpFalse".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpTrue => {
+            Some(Definition{name: "OpTrue".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpEq => {
+            Some(Definition{name: "OpEq".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpNotEq => {
+            Some(Definition{name: "OpNotEq".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpGreaterThan => {
+            Some(Definition{name:"OpGreaterThan".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpBang => {
+            Some(Definition{name:"OpBang".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpMinus => {
+            Some(Definition{name:"OpMinus".to_string(), operand_withs: vec![]})
+        }
         _ => {
             None
         }

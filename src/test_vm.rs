@@ -21,7 +21,7 @@ fn parse(input: String) -> Program
 fn run_vm_tests(tests: Vec<VmTestCase>) {
     for test in tests
     {
-        let program = parse(test.input);
+        let program = parse(test.input.clone());
 
         let mut compiler = Compiler::new();
         compiler.compile(Node::Program(program));
@@ -29,16 +29,9 @@ fn run_vm_tests(tests: Vec<VmTestCase>) {
         let mut vm = Vm::new(compiler.get_bytecode());
         vm.run();
 
-        let stack_element = vm.get_stack_top();
-        if let Some(stack_element) = stack_element
-        {
-            assert_eq!(test.expected, stack_element);
-        }
-        else {
-            panic!("couldn't read stack_top");
-        }
+        let stack_element = vm.last_popped_stack_element();
 
-
+        assert_eq!(test.expected, stack_element, "{}", test.input);
     }
 }
 
@@ -46,7 +39,7 @@ fn run_vm_tests(tests: Vec<VmTestCase>) {
 fn test_integer_arithmetic()
 {
     let tests = vec![
-        VmTestCase {
+       VmTestCase {
             input: "1".to_string(),
             expected: Object::IntegerObject(1)
         },
@@ -56,9 +49,77 @@ fn test_integer_arithmetic()
         },
         VmTestCase {
             input: "1 + 2".to_string(),
-            expected: Object::IntegerObject(2)//TODO: Fix this, should be 3
+            expected: Object::IntegerObject(3)
+        },
+        VmTestCase {
+            input: "1 * 2".to_string(),
+            expected: Object::IntegerObject(2)
+        },
+        VmTestCase {
+            input: "2 - 1".to_string(),
+            expected: Object::IntegerObject(1)
+        },
+        VmTestCase {
+            input: "2 / 2".to_string(),
+            expected: Object::IntegerObject(1)
+        },
+        VmTestCase {
+            input: "-1;".to_string(),
+            expected: Object::IntegerObject(-1)
+        },
+        VmTestCase {
+            input: "!!1".to_string(),
+            expected: Object::BooleanObject(false)
         }
     ];
 
+    run_vm_tests(tests);
+}
+
+#[test]
+fn test_boolean_arithmetic()
+{
+    let tests = vec![
+        VmTestCase {
+            input: "true;".to_string(),
+            expected: Object::BooleanObject(true)
+        },
+        VmTestCase {
+            input: "false".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 < 2".to_string(),
+            expected: Object::BooleanObject(true)
+        },
+        VmTestCase {
+            input: "1 > 2".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 < 1".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 > 1".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 == 1".to_string(),
+            expected: Object::BooleanObject(true)
+        },
+        VmTestCase {
+            input: "1 == 2".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 != 1".to_string(),
+            expected: Object::BooleanObject(false)
+        },
+        VmTestCase {
+            input: "1 != 2".to_string(),
+            expected: Object::BooleanObject(true)
+        }
+    ];
     run_vm_tests(tests);
 }

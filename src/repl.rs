@@ -1,10 +1,12 @@
 use std::io::Write;
 use crate::ast::Node;
+use crate::compiler::Compiler;
 use crate::environment::Environment;
 use crate::evaluator::eval;
 use crate::lexer::Lexer;
 use crate::object::Object;
 use crate::parser::Parser;
+use crate::vm::Vm;
 
 const PROMPT: &str = ">>";
 pub fn start() {
@@ -31,12 +33,25 @@ pub fn start() {
             continue;
         }
 
-        let evaluated = eval(Node::Program(program),& mut env);
+        /*let evaluated = eval(Node::Program(program),& mut env);
         if let Object::Null = &evaluated
         {
             continue;
         }
         println!("{}", evaluated.inspect());
+
+        */
+
+        let mut compiler = Compiler::new();
+        compiler.compile(Node::Program(program));
+        let mut vm = Vm::new(compiler.get_bytecode());
+        vm.run();
+        let value = vm.last_popped_stack_element();
+        if let Object::Null = &value
+        {
+            continue;
+        }
+        println!("{}", value.inspect());
 
     }
 }
