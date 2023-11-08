@@ -84,7 +84,10 @@ pub enum Opcode {
     OpNotEq,
     OpGreaterThan,
     OpMinus,
-    OpBang
+    OpBang,
+    OpJumpNotTrue,
+    OpJump,
+    OpNull
 }
 
 pub struct Definition {
@@ -133,6 +136,15 @@ pub fn look_up(code: &Opcode) -> Option<Definition>
         },
         Opcode::OpMinus => {
             Some(Definition{name:"OpMinus".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpJump => {
+            Some(Definition{name:"OpJump".to_string(), operand_withs: vec![2]})
+        },
+        Opcode::OpJumpNotTrue => {
+            Some(Definition{name:"OpJumpNotTrue".to_string(), operand_withs: vec![2]})
+        },
+        Opcode::OpNull => {
+            Some(Definition{name:"OpNull".to_string(), operand_withs: vec![]})
         }
         _ => {
             None

@@ -1,6 +1,6 @@
 use crate::ast::{Node, Program};
 use crate::code::{Instructions, make};
-use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpMinus, OpMul, OpNotEq, OpPop, OpSub, OpTrue};
+use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSub, OpTrue};
 use crate::compiler::Compiler;
 use crate::lexer::Lexer;
 use crate::object::Object;
@@ -21,11 +21,10 @@ fn parse(input: String) -> Program
 
 fn run_compiler_tests(tests: Vec<CompilerTestCase>) {
     for test in tests {
-        let program = parse(test.input);
+        let program = parse(test.input.clone());
         let mut compiler = Compiler::new();
         compiler.compile(Node::Program(program));
         let bytecode = compiler.get_bytecode();
-
         test_instructions(bytecode.instructions, test.expected_instructions);
         test_constants(bytecode.constants, test.expected_constants);
     }
@@ -157,5 +156,40 @@ fn test_boolean_arithmetic()
         },
     ];
 
+    run_compiler_tests(tests);
+}
+
+#[test]
+fn test_conditionals() {
+    let tests = vec![
+        CompilerTestCase {
+            input: "if(true) { 10}; 3333;".to_string(),
+            expected_constants: vec![Object::IntegerObject(10), Object::IntegerObject(3333)],
+            expected_instructions: vec![
+                make(OpTrue, vec![]).unwrap(),
+                make(OpJumpNotTrue, vec![10]).unwrap(),
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpJump, vec![11]).unwrap(),
+                make(OpNull, vec![]).unwrap(),
+                make(OpPop, vec![]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        },
+        CompilerTestCase {
+            input: "if(true) { 10 } else { 20 }; 3333;".to_string(),
+            expected_constants: vec![Object::IntegerObject(10), Object::IntegerObject(20), Object::IntegerObject(3333)],
+            expected_instructions: vec![
+                make(OpTrue, vec![]).unwrap(), //0000
+                make(OpJumpNotTrue, vec![10]).unwrap(), //0001
+                make(OpConstant, vec![0]).unwrap(), //0004
+                make(OpJump, vec![13]).unwrap(), //0007
+                make(OpConstant, vec![1]).unwrap(), //0010
+                make(OpPop, vec![]).unwrap(), //0013
+                make(OpConstant, vec![2]).unwrap(), //0014
+                make(OpPop, vec![]).unwrap()
+            ]
+        }
+    ];
     run_compiler_tests(tests);
 }

@@ -101,6 +101,8 @@ impl Vm {
 
         panic!("Comparison operands not supported");
     }
+
+
     fn handle_prefix(& mut self, operator: Opcode)
     {
         let prev = self.pop();
@@ -139,6 +141,7 @@ impl Vm {
             }
         }
     }
+
     pub fn run(&mut self) {
         let mut cursor = Cursor::new(self.instructions.content.clone());
         while (cursor.position() as usize) < self.instructions.content.len() {
@@ -165,6 +168,17 @@ impl Vm {
                     let (first, second) = self.handle_integer_infix_expression();
                     self.push(IntegerObject(second / first));
                 },
+                Opcode::OpJumpNotTrue => {
+                    let pos = cursor.read_u16::<BigEndian>().unwrap();
+                    if !is_true(self.pop())
+                    {
+                        cursor.set_position(pos as u64);
+                    }
+                },
+                Opcode::OpJump => {
+                    let pos = cursor.read_u16::<BigEndian>().unwrap();
+                    cursor.set_position(pos as u64);
+                }
                 Opcode::OpEq => {
                     self.handle_comparison(opcode);
                 },
@@ -179,7 +193,11 @@ impl Vm {
                 },
                 Opcode::OpBang => {
                     self.handle_prefix(opcode);
-                }
+                },
+                Opcode::OpNull =>
+                    {
+                        self.push(Object::Null);
+                    }
                 Opcode::OpPop => {
                     self.pop();
                 },
@@ -223,5 +241,24 @@ impl Vm {
             self.stack[self.sp] = object;
         }
         self.sp += 1;
+    }
+}
+
+fn is_true(object: Object) -> bool {
+    match object
+    {
+        IntegerObject(content) =>
+            {
+                content != 0
+            },
+        BooleanObject(content) => {
+            content
+        },
+        Object::Null => {
+            false
+        }
+        _ => {
+            panic!("type not supported: {}", object.get_type())
+        }
     }
 }

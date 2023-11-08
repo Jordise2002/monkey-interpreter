@@ -396,7 +396,6 @@ fn test_if_expression() {
 
     if let ExpressionStatement(expr) = &program.statements[0] {
         if let Expression::IfExpression(content) = expr {
-            println!("{}",expr.to_string());
             test_infix_expression(content.condition.as_ref().clone(), ValueType::StringInput("x".to_string()), ValueType::StringInput("y".to_string()), Token::LT);
             assert_eq!(content.consequence.len(), 1);
             assert_eq!(content.consequence[0].to_string(), "x;");
@@ -429,7 +428,6 @@ fn test_fn_expression() {
             assert_eq!(content.params[0].get_id(), "x");
             assert_eq!(content.params[1].get_id(), "y");
             assert_eq!(content.body.len(), 1);
-            println!("{}",expr.to_string());
         }
         else {
             panic!("Expression was not FnExpression");

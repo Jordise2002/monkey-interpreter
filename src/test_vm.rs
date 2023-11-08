@@ -123,3 +123,47 @@ fn test_boolean_arithmetic()
     ];
     run_vm_tests(tests);
 }
+
+#[test]
+fn test_conditionals() {
+    let tests = vec![
+      VmTestCase {
+          input: "if(true) { 10 }".to_string(),
+          expected: Object::IntegerObject(10)
+      },
+      VmTestCase {
+          input: "if(true) { 10 } else { 20 }".to_string(),
+          expected: Object::IntegerObject(10)
+      },
+      VmTestCase {
+          input: "if(false) { 10 } else { 20 }".to_string(),
+          expected: Object::IntegerObject(20)
+      },
+      VmTestCase {
+          input: "if(1) { 10 }".to_string(),
+          expected: Object::IntegerObject(10)
+      },
+      VmTestCase {
+          input: "if( 1 < 2 ) { 10 }".to_string(),
+          expected: Object::IntegerObject(10)
+      },
+      VmTestCase{
+          input: "if( 1 < 2) { 10 } else { 20 }".to_string(),
+          expected: Object::IntegerObject(10)
+      },
+      VmTestCase{
+          input: "if( 1 > 2) { 10 } else { 20 }".to_string(),
+          expected: Object::IntegerObject(20)
+      },
+      VmTestCase {
+          input: "if ( 1 > 2) { 10 }".to_string(),
+          expected: Object::Null
+      },
+      VmTestCase {
+          input: "if (false) { 10 }".to_string(),
+          expected: Object::Null
+      }
+    ];
+
+    run_vm_tests(tests);
+}

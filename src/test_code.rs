@@ -39,7 +39,6 @@ fn test_print_code() {
         make(OpAdd, vec![]).unwrap()];
     let input = concat_instructions(input);
     let expected = "0000 OpConstant 87\n0003 OpConstant 3\n0006 OpAdd\n";
-    print!("{}",input.to_string());
     assert_eq!(input.to_string(), expected);
 
 }
