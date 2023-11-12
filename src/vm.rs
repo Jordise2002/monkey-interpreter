@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Cursor;
 use std::os::unix::raw::off_t;
 use byteorder::{BigEndian, ReadBytesExt};
@@ -214,6 +215,68 @@ impl Vm {
             self.globals[pos] = Some(element);
         }
     }
+
+    pub fn get_array_from_stack(&mut self, len: u16) -> Vec<Box<Object>>
+    {
+        let mut array = Vec::new();
+        for _index in (0..len).rev()
+        {
+            array.push(Box::new(self.pop()));
+        }
+        array.reverse();
+        array
+    }
+
+    pub fn get_hash_from_stack(&mut self, len:u16) -> HashMap<Object, Object>
+    {
+        let mut hash = HashMap::new();
+        for _index in (0..len).rev()
+        {
+            let second = self.pop();
+            let first = self.pop();
+            hash.insert(first, second);
+        }
+        hash
+    }
+
+
+    fn handle_index(&self, index: Object, array: Object) -> Object
+    {
+        if let Object::Array(content) = array
+        {
+            if let Object::IntegerObject(index) = &index
+            {
+                if let Some(object) = content.get(*index as usize)
+                {
+                    object.as_ref().clone()
+                }
+                else {
+                    Object::Null
+                }
+            }
+            else {
+                panic!("Type {} not supported as index", index.get_type());
+            }
+        }
+        else if let Object::HashMap(array) = array {
+            if index.is_hashable()
+            {
+                if let Some(content) = array.get(&index) {
+                    content.clone()
+                }
+                else {
+                    Object::Null
+                }
+            }
+            else {
+                panic!("Type {} not hashable", index.get_type())
+            }
+
+        }
+        else {
+            panic!("Type {} not indexable", index.get_type())
+        }
+    }
     pub fn run(&mut self) {
         let mut cursor = Cursor::new(self.instructions.content.clone());
         while (cursor.position() as usize) < self.instructions.content.len() {
@@ -277,7 +340,22 @@ impl Vm {
                 Opcode::OpNull =>
                     {
                         self.push(Object::Null);
-                    }
+                    },
+                Opcode::OpArray => {
+                    let len = cursor.read_u16::<BigEndian>().unwrap();
+                    let array = self.get_array_from_stack(len);
+                    self.push(Object::Array(array));
+                },
+                Opcode::OpIndex => {
+                    let index = self.pop();
+                    let array = self.pop();
+                    self.push(self.handle_index(index, array));
+                }
+                Opcode::OpHash => {
+                    let len = cursor.read_u16::<BigEndian>().unwrap();
+                    let array = self.get_hash_from_stack(len);
+                    self.push(Object::HashMap(array));
+                }
                 Opcode::OpPop => {
                     self.pop();
                 },

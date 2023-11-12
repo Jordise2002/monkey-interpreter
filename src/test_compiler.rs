@@ -1,9 +1,10 @@
 use crate::ast::{Node, Program};
 use crate::code::{Instructions, make};
-use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
+use crate::code::Opcode::{OpAdd, OpArray, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpHash, OpIndex, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
 use crate::compiler::Compiler;
 use crate::lexer::Lexer;
 use crate::object::Object;
+use crate::object::Object::IntegerObject;
 use crate::parser::Parser;
 
 struct CompilerTestCase {
@@ -230,6 +231,134 @@ fn test_string_expressions() {
                 make(OpConstant, vec![0]).unwrap(),
                 make(OpConstant, vec![1]).unwrap(),
                 make(OpAdd, vec![]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        }
+    ];
+
+    run_compiler_tests(tests);
+}
+
+#[test]
+fn test_array_expr() {
+    let tests = vec![
+        CompilerTestCase {
+            input:"[]".to_string(),
+            expected_constants: vec![],
+            expected_instructions: vec![
+                make(OpArray, vec![0]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        },
+        CompilerTestCase{
+            input: "[1, 2, 3];".to_string(),
+            expected_constants: vec![Object::IntegerObject(1), Object::IntegerObject(2), Object::IntegerObject(3)],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpConstant, vec![2]).unwrap(),
+                make(OpArray, vec![3]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        },
+        CompilerTestCase {
+            input: "[1 + 2, 3 - 4, 5 * 6];".to_string(),
+            expected_constants: vec![Object::IntegerObject(1),
+                                     Object::IntegerObject(2),
+                                     Object::IntegerObject(3),
+                                     Object::IntegerObject(4),
+                                     Object::IntegerObject(5),
+                                     Object::IntegerObject(6)],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpAdd, vec![]).unwrap(),
+                make(OpConstant, vec![2]).unwrap(),
+                make(OpConstant, vec![3]).unwrap(),
+                make(OpSub, vec![]).unwrap(),
+                make(OpConstant, vec![4]).unwrap(),
+                make(OpConstant, vec![5]).unwrap(),
+                make(OpMul, vec![]).unwrap(),
+                make(OpArray, vec![3]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+
+        }
+    ];
+
+    run_compiler_tests(tests);
+}
+
+#[test]
+fn test_hash_expr() {
+    let tests = vec![
+      CompilerTestCase
+      {
+          input: "{1: 2, 3: 4, 5: 6}".to_string(),
+            expected_constants: vec![
+                Object::IntegerObject(1),
+                Object::IntegerObject(2),
+                Object::IntegerObject(3),
+                Object::IntegerObject(4),
+                Object::IntegerObject(5),
+                Object::IntegerObject(6)
+            ],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpConstant, vec![2]).unwrap(),
+                make(OpConstant, vec![3]).unwrap(),
+                make(OpConstant, vec![4]).unwrap(),
+                make(OpConstant, vec![5]).unwrap(),
+                make(OpHash, vec![3]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+      }
+    ];
+
+    run_compiler_tests(tests);
+}
+
+#[test]
+fn test_index_expressions() {
+    let tests = vec![
+        CompilerTestCase {
+            input: "[1, 2, 3][1 + 1]".to_string(),
+            expected_constants: vec![
+                IntegerObject(1),
+                IntegerObject(2),
+                IntegerObject(3),
+                IntegerObject(1),
+                IntegerObject(1)
+            ],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpConstant, vec![2]).unwrap(),
+                make(OpArray, vec![3]).unwrap(),
+                make(OpConstant, vec![3]).unwrap(),
+                make(OpConstant, vec![4]).unwrap(),
+                make(OpAdd, vec![]).unwrap(),
+                make(OpIndex, vec![]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        },
+        CompilerTestCase {
+            input: "{2: 1}[1 + 1]".to_string(),
+            expected_constants: vec![
+                IntegerObject(2),
+                IntegerObject(1),
+                IntegerObject(1),
+                IntegerObject(1)
+            ],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpHash, vec![1]).unwrap(),
+                make(OpConstant, vec![2]).unwrap(),
+                make(OpConstant, vec![3]).unwrap(),
+                make(OpAdd, vec![]).unwrap(),
+                make(OpIndex, vec![]).unwrap(),
                 make(OpPop, vec![]).unwrap()
             ]
         }

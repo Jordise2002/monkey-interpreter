@@ -89,7 +89,10 @@ pub enum Opcode {
     OpJump,
     OpNull,
     OpSetGlobal,
-    OpGetGlobal
+    OpGetGlobal,
+    OpArray,
+    OpHash,
+    OpIndex
 }
 
 pub struct Definition {
@@ -153,6 +156,15 @@ pub fn look_up(code: &Opcode) -> Option<Definition>
         },
         Opcode::OpSetGlobal => {
             Some(Definition{name:"OpSetGlobal".to_string(), operand_withs: vec![2]})
+        },
+        Opcode::OpArray => {
+            Some(Definition{name:"OpArray".to_string(), operand_withs: vec![2]})
+        },
+        Opcode::OpHash => {
+            Some(Definition{name:"OpHash".to_string(), operand_withs: vec![2]})
+        },
+        Opcode::OpIndex => {
+            Some(Definition{name:"OpIndex".to_string(), operand_withs: vec![]})
         }
         _ => {
             None

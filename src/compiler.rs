@@ -1,7 +1,7 @@
 use num_traits::FromPrimitive;
 use crate::ast::{Expression, Node, Statement};
 use crate::code::{Instructions, make, Opcode};
-use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpFalse, OpGetGlobal, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
+use crate::code::Opcode::{OpAdd, OpArray, OpBang, OpConstant, OpDiv, OpEq, OpFalse, OpGetGlobal, OpGreaterThan, OpHash, OpIndex, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
 use crate::object::Object;
 use crate::symbol_table::SymbolTable;
 use crate::token::Token;
@@ -264,6 +264,28 @@ impl Compiler {
                         }
                     }
             },
+            Expression::ArrayLiteral(content) => {
+                for expr in &content.elements
+                {
+                    self.compile_expr(expr)
+                }
+
+                self.emit(OpArray, vec![content.elements.len()]);
+            },
+            Expression::HashExpression(content) => {
+                for (key, value) in &content.pairs{
+                    self.compile_expr(key);
+                    self.compile_expr(value);
+                }
+
+                self.emit(OpHash, vec![content.pairs.len()]);
+            },
+            Expression::IndexExpression(content) => {
+                self.compile_expr(content.left.as_ref());
+                self.compile_expr(content.index.as_ref());
+
+                self.emit(OpIndex, vec![]);
+            }
             Expression::IdentifierExpression(id) => {
                 let symbol = self.symbol_table.resolve(id.id.clone()).expect(format!("undefined variable {}", id.id).as_str());
                 self.emit(OpGetGlobal, vec![symbol.index]);
