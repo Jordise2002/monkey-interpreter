@@ -2,7 +2,8 @@ use std::io::Cursor;
 use std::os::unix::raw::off_t;
 use byteorder::{BigEndian, ReadBytesExt};
 use num_traits::FromPrimitive;
-use crate::code::{Instructions, Opcode};
+use crate::code::{Instructions, look_up, Opcode};
+use crate::code::Opcode::{OpAdd, OpDiv, OpMul, OpSub};
 use crate::compiler::ByteCode;
 use crate::object::Object;
 use crate::object::Object::{BooleanObject, IntegerObject};
@@ -50,17 +51,62 @@ impl Vm {
         }
     }
 
-    pub fn handle_integer_infix_expression(&mut self) -> (i64, i64)
+    pub fn handle_infix_expression(& mut self, operator: Opcode)
     {
-        let first = self.pop();
         let second = self.pop();
-        if let Object::IntegerObject(first) = first
+        let first = self.pop();
+
+        if let Object::IntegerObject(first) = first.clone()
+            {
+                if let Object::IntegerObject(second) = second.clone()
+                {
+                    self.handle_integer_infix_expression(first, second, operator.clone());
+                    return;
+                }
+            }
+        else if let Object::StringObject(first) = first.clone()
         {
-            if let Object::IntegerObject(second) = second {
-                return (first, second);
+            if let Object::StringObject(second) = second.clone()
+            {
+               self.handle_string_infix_expression(first, second, operator.clone());
+                return;
             }
         }
-        panic!("Unsupport object type {} {}", first.get_type(), second.get_type())
+        panic!("operators not supported: {} {} {}", first.get_type(), look_up(&operator).unwrap().name, second.get_type())
+    }
+
+    pub fn handle_integer_infix_expression(&mut self, first: i64, second: i64, operator: Opcode)
+    {
+        match operator {
+            Opcode::OpAdd =>
+                {
+                    self.push(Object::IntegerObject(first + second))
+                }
+            Opcode::OpMul => {
+                self.push(Object::IntegerObject(first * second))
+            },
+            Opcode::OpDiv => {
+                self.push(Object::IntegerObject(first / second))
+            },
+            Opcode::OpSub => {
+                self.push(Object::IntegerObject(first- second))
+            }
+            _ => {
+                panic!("opcode not supported");
+            }
+        }
+    }
+
+    pub fn handle_string_infix_expression(&mut self, first: String, second: String, operator: Opcode)
+    {
+        match operator {
+            OpAdd => {
+                self.push(Object::StringObject(first + second.as_str()))
+            }
+            _ => {
+                panic!("opcode not supported");
+            }
+        }
     }
 
     pub fn handle_comparison(& mut self, operator: Opcode)
@@ -179,20 +225,16 @@ impl Vm {
                     self.push(self.constants[index as usize].clone());
                 },
                 Opcode::OpAdd => {
-                    let (first, second) = self.handle_integer_infix_expression();
-                    self.push(IntegerObject(first + second));
+                    self.handle_infix_expression(OpAdd);
                 },
                 Opcode::OpMul => {
-                    let (first, second) = self.handle_integer_infix_expression();
-                    self.push(IntegerObject(first * second));
+                    self.handle_infix_expression(OpMul);
                 },
                 Opcode::OpSub => {
-                    let (first, second) = self.handle_integer_infix_expression();
-                    self.push(IntegerObject(second - first));
+                    self.handle_infix_expression(OpSub);
                 },
                 Opcode::OpDiv => {
-                    let (first, second) = self.handle_integer_infix_expression();
-                    self.push(IntegerObject(second / first));
+                    self.handle_infix_expression(OpDiv);
                 },
                 Opcode::OpJumpNotTrue => {
                     let pos = cursor.read_u16::<BigEndian>().unwrap();

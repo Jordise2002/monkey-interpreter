@@ -231,6 +231,11 @@ impl Compiler {
                     let constant_id = self.add_constant(constant);
                     self.emit(OpConstant, vec![constant_id]);
                 },
+            Expression::StringExpression(content) => {
+                let constant = Object::StringObject(content.clone());
+                let constant_id = self.add_constant(constant);
+                self.emit(OpConstant, vec![constant_id]);
+            }
             Expression::BoolExpression(content) =>
                 {
                     match content

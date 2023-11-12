@@ -211,3 +211,29 @@ fn test_variables() {
 
     run_compiler_tests(tests);
 }
+
+#[test]
+fn test_string_expressions() {
+    let tests = vec![
+        CompilerTestCase {
+            input: "\"monkey\"".to_string(),
+            expected_constants:vec![Object::StringObject("monkey".to_string())],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        },
+        CompilerTestCase {
+            input: "\"mon\" + \"key\"".to_string(),
+            expected_constants: vec![Object::StringObject("mon".to_string()), Object::StringObject("key".to_string())],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpAdd, vec![]).unwrap(),
+                make(OpPop, vec![]).unwrap()
+            ]
+        }
+    ];
+
+    run_compiler_tests(tests);
+}
