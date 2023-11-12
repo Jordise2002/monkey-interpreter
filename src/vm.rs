@@ -8,27 +8,37 @@ use crate::object::Object;
 use crate::object::Object::{BooleanObject, IntegerObject};
 
 const STACK_SIZE:usize = 2048;
+const GLOBAL_SIZE:usize = 65536;
 
 pub struct Vm {
     constants: Vec<Object>,
     instructions: Instructions,
 
     stack: Vec<Object>,
-    sp: usize
+    sp: usize,
+
+    pub globals: Vec<Option<Object>>
 }
 
 impl Vm {
     pub fn new(bytecode: ByteCode) -> Self
     {
+
         Vm {
             constants: bytecode.constants,
             instructions: bytecode.instructions,
             stack: Vec::new(),
-            sp: 0
-
+            sp: 0,
+            globals: Vec::new()
         }
     }
 
+    pub fn new_with_state(bytecode: ByteCode, globals: Vec<Option<Object>>) -> Self
+    {
+        let mut vm = Vm::new(bytecode);
+        vm.globals = globals;
+        vm
+    }
     pub fn get_stack_top(&self) -> Option<Object>
     {
         if self.sp == 0
@@ -142,6 +152,22 @@ impl Vm {
         }
     }
 
+    pub fn push_global(& mut self, element: Object, pos: usize)
+    {
+        if self.globals.get(pos).is_none()
+        {
+            let mut i = self.globals.len();
+            while i != pos
+            {
+                self.globals.push(None);
+                i += 1;
+            }
+            self.globals.push(Some(element));
+        }
+        else {
+            self.globals[pos] = Some(element);
+        }
+    }
     pub fn run(&mut self) {
         let mut cursor = Cursor::new(self.instructions.content.clone());
         while (cursor.position() as usize) < self.instructions.content.len() {
@@ -175,6 +201,18 @@ impl Vm {
                         cursor.set_position(pos as u64);
                     }
                 },
+                Opcode::OpGetGlobal => {
+                    let pos = cursor.read_u16::<BigEndian>().unwrap();
+                    if let Some(content) = self.globals.get(pos as usize).clone()
+                    {
+                        self.push(content.clone().unwrap());
+                    }
+                },
+                Opcode::OpSetGlobal => {
+                    let pos = cursor.read_u16::<BigEndian>().unwrap();
+                    let element = self.pop();
+                    self.push_global(element, pos as usize);
+                }
                 Opcode::OpJump => {
                     let pos = cursor.read_u16::<BigEndian>().unwrap();
                     cursor.set_position(pos as u64);

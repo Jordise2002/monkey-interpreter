@@ -6,12 +6,16 @@ use crate::evaluator::eval;
 use crate::lexer::Lexer;
 use crate::object::Object;
 use crate::parser::Parser;
+use crate::symbol_table::SymbolTable;
 use crate::vm::Vm;
 
 const PROMPT: &str = ">>";
 pub fn start() {
     let mut line = String::new();
     let mut env = Environment::new();
+    let mut constants = Vec::new();
+    let mut globals = Vec::new();
+    let mut symbol_table = SymbolTable::new();
     loop{
         line.clear();
         print!("{}", PROMPT);
@@ -42,9 +46,11 @@ pub fn start() {
 
         */
 
-        let mut compiler = Compiler::new();
+        let mut compiler = Compiler::new_with_state(constants.clone(), symbol_table.clone());
         compiler.compile(Node::Program(program));
-        let mut vm = Vm::new(compiler.get_bytecode());
+        symbol_table = compiler.symbol_table.clone();
+        constants = compiler.constants.clone();
+        let mut vm = Vm::new_with_state(compiler.get_bytecode(), globals.clone());
         vm.run();
         let value = vm.last_popped_stack_element();
         if let Object::Null = &value
@@ -53,5 +59,6 @@ pub fn start() {
         }
         println!("{}", value.inspect());
 
+        globals = vm.globals;
     }
 }

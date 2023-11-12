@@ -1,6 +1,6 @@
 use crate::ast::{Node, Program};
 use crate::code::{Instructions, make};
-use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSub, OpTrue};
+use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
 use crate::compiler::Compiler;
 use crate::lexer::Lexer;
 use crate::object::Object;
@@ -191,5 +191,23 @@ fn test_conditionals() {
             ]
         }
     ];
+    run_compiler_tests(tests);
+}
+
+#[test]
+fn test_variables() {
+    let tests = vec![
+        CompilerTestCase {
+            input: "let x = 1; let y = 2;".to_string(),
+            expected_constants: vec![Object::IntegerObject(1), Object::IntegerObject(2)],
+            expected_instructions: vec![
+                make(OpConstant, vec![0]).unwrap(),
+                make(OpSetGlobal, vec![0]).unwrap(),
+                make(OpConstant, vec![1]).unwrap(),
+                make(OpSetGlobal, vec![1]).unwrap()
+            ]
+        }
+    ];
+
     run_compiler_tests(tests);
 }

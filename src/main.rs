@@ -21,6 +21,9 @@ mod test_compiler;
 #[cfg(test)]
 mod test_vm;
 mod vm;
+mod symbol_table;
+#[cfg(test)]
+mod test_symbol_table;
 
 fn main() {
     repl::start();

@@ -1,8 +1,9 @@
 use num_traits::FromPrimitive;
 use crate::ast::{Expression, Node, Statement};
 use crate::code::{Instructions, make, Opcode};
-use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpFalse, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSub, OpTrue};
+use crate::code::Opcode::{OpAdd, OpBang, OpConstant, OpDiv, OpEq, OpFalse, OpGetGlobal, OpGreaterThan, OpJump, OpJumpNotTrue, OpMinus, OpMul, OpNotEq, OpNull, OpPop, OpSetGlobal, OpSub, OpTrue};
 use crate::object::Object;
+use crate::symbol_table::SymbolTable;
 use crate::token::Token;
 
 
@@ -14,9 +15,10 @@ struct EmittedInstruction {
 
 pub struct Compiler {
     instructions: Instructions,
-    constants: Vec<Object>,
+    pub constants: Vec<Object>,
     last_instruction: Option<EmittedInstruction>,
-    previos_instruction: Option<EmittedInstruction>
+    previous_instruction: Option<EmittedInstruction>,
+    pub symbol_table: SymbolTable
 }
 
 
@@ -26,7 +28,18 @@ impl Compiler {
             instructions: Instructions::new(),
             constants: Vec::new(),
             last_instruction: None,
-            previos_instruction: None
+            previous_instruction: None,
+            symbol_table: SymbolTable::new()
+        }
+    }
+
+    pub fn new_with_state(constants: Vec<Object>, symbol_table: SymbolTable) -> Self {
+        Compiler {
+            instructions: Instructions::new(),
+            constants,
+            last_instruction: None,
+            previous_instruction: None,
+            symbol_table
         }
     }
 
@@ -66,7 +79,7 @@ impl Compiler {
             code,
             index
         });
-        self.previos_instruction = previous;
+        self.previous_instruction = previous;
     }
 
     fn is_last_instruction_pop(&self) -> bool {
@@ -103,6 +116,12 @@ impl Compiler {
     {
         match stmt
         {
+            Statement::LetStatement(id, expr) => {
+                self.compile_expr(&expr);
+                let symbol = self.symbol_table.define(id.id);
+                self.emit(OpSetGlobal, vec![symbol.index]);
+
+            }
             Statement::ExpressionStatement(expr) =>
                 {
                     self.compile_expr(&expr);
@@ -239,6 +258,10 @@ impl Compiler {
                             panic!("Operator {} not supported", operator.inspect());
                         }
                     }
+            },
+            Expression::IdentifierExpression(id) => {
+                let symbol = self.symbol_table.resolve(id.id.clone()).expect(format!("undefined variable {}", id.id).as_str());
+                self.emit(OpGetGlobal, vec![symbol.index]);
             }
             _=> {
                 panic!("Expression not supported");
