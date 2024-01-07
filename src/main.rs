@@ -1,3 +1,4 @@
+use crate::repl::ReplMode::{CompilerMode, InterpreterMode};
 
 mod token;
 mod lexer;
@@ -26,5 +27,27 @@ mod symbol_table;
 mod test_symbol_table;
 
 fn main() {
-    repl::start();
+    let arg = std::env::args().nth(1);
+    match arg
+    {
+        Some(content) =>
+            {
+                match content.as_str() {
+                    "-c" => {
+                       repl::start(CompilerMode)
+                    },
+                    "-i" => {
+                        repl::start(InterpreterMode)
+                    }
+                    _ =>
+                        {
+                            panic!("parameter: {} not supported!", content);
+                        }
+                }
+            }
+        None =>
+            {
+                repl::start(CompilerMode);
+            }
+    }
 }

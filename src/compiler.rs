@@ -84,7 +84,7 @@ impl Compiler {
 
     fn is_last_instruction_pop(&self) -> bool {
         if let Some(content) = &self.last_instruction {
-            if let Opcode = content.code.clone() {
+            if let OpPop = content.code.clone() {
                 return true;
             }
         }
@@ -132,6 +132,7 @@ impl Compiler {
             }
         }
     }
+
 
     fn replace_instruction(&mut self, pos: usize, new_instruction: Instructions)
     {

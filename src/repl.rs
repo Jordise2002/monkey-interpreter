@@ -10,7 +10,14 @@ use crate::symbol_table::SymbolTable;
 use crate::vm::Vm;
 
 const PROMPT: &str = ">>";
-pub fn start() {
+
+pub enum ReplMode
+{
+    InterpreterMode,
+    CompilerMode
+}
+
+pub fn start(mode: ReplMode) {
     let mut line = String::new();
     let mut env = Environment::new();
     let mut constants = Vec::new();
@@ -37,28 +44,32 @@ pub fn start() {
             continue;
         }
 
-        /*let evaluated = eval(Node::Program(program),& mut env);
-        if let Object::Null = &evaluated
+        match mode
         {
-            continue;
+            ReplMode::InterpreterMode => {
+                let evaluated = eval(Node::Program(program),& mut env);
+                if let Object::Null = &evaluated
+                {
+                    continue;
+                }
+                println!("{}", evaluated.inspect());
+            },
+            ReplMode::CompilerMode => {
+                let mut compiler = Compiler::new_with_state(constants.clone(), symbol_table.clone());
+                compiler.compile(Node::Program(program));
+                symbol_table = compiler.symbol_table.clone();
+                constants = compiler.constants.clone();
+                let mut vm = Vm::new_with_state(compiler.get_bytecode(), globals.clone());
+                vm.run();
+                let value = vm.last_popped_stack_element();
+                if let Object::Null = &value
+                {
+                    continue;
+                }
+                println!("{}", value.inspect());
+
+                globals = vm.globals;
+            }
         }
-        println!("{}", evaluated.inspect());
-
-        */
-
-        let mut compiler = Compiler::new_with_state(constants.clone(), symbol_table.clone());
-        compiler.compile(Node::Program(program));
-        symbol_table = compiler.symbol_table.clone();
-        constants = compiler.constants.clone();
-        let mut vm = Vm::new_with_state(compiler.get_bytecode(), globals.clone());
-        vm.run();
-        let value = vm.last_popped_stack_element();
-        if let Object::Null = &value
-        {
-            continue;
-        }
-        println!("{}", value.inspect());
-
-        globals = vm.globals;
     }
 }

@@ -1,5 +1,5 @@
 use crate::object::Object;
-
+#[allow(dead_code)]
 
 pub fn get_built_in(id: String) -> Option<Object> {
     match id.as_str() {
