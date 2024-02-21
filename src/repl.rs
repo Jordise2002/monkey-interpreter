@@ -1,5 +1,6 @@
 use std::io::Write;
 use crate::ast::Node;
+use crate::builtins::BUILT_INS;
 use crate::compiler::Compiler;
 use crate::environment::Environment;
 use crate::evaluator::eval;
@@ -23,6 +24,10 @@ pub fn start(mode: ReplMode) {
     let mut constants = Vec::new();
     let mut globals = Vec::new();
     let mut symbol_table = SymbolTable::new();
+    for (i, o) in BUILT_INS.into_iter().zip(0..BUILT_INS.len())
+    {
+        symbol_table.define_builtin(o, i.to_string());
+    }
     loop{
         line.clear();
         print!("{}", PROMPT);

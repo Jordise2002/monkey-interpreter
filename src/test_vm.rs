@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::vec;
 use crate::ast::{Node, Program};
 use crate::compiler::Compiler;
 use crate::lexer::Lexer;
@@ -266,4 +267,162 @@ fn test_index_expression() {
     ];
 
     run_vm_tests(tests);
+}
+
+#[test]
+fn test_function_without_params()
+{
+    let tests = vec![
+        VmTestCase
+        {
+            input: "let fivePlusTen = fn() { 5 + 10 }; fivePlusTen();".to_string(),
+            expected: Object::IntegerObject(15)
+        },
+        VmTestCase {
+            input: "let one = fn() { 1; };
+                    let two = fn() { 2;  };
+                    one() + two()".to_string(),
+            expected: Object::IntegerObject(3)
+        },
+        VmTestCase {
+            input: "let a = fn() { 1 };
+                    let b = fn() { a() + 1 };
+                    let c = fn() { b() + 1 };
+                    c();".to_string(),
+            expected: Object::IntegerObject(3)
+        },
+        VmTestCase {
+            input: "let earlyExit  = fn() { return 99; 100; }; earlyExit();".to_string(),
+            expected: Object::IntegerObject(99)
+        }
+    ];
+
+    run_vm_tests(tests);
+}
+#[test]
+fn test_function_without_return()
+{   
+    let tests = vec![
+        VmTestCase {
+            input: "let noReturn = fn() { };
+                    noReturn();".to_string(),
+            expected: Object::Null
+        },
+        VmTestCase {
+            input: "let noReturn = fn() { };
+                    let noReturnTwo = fn() { noReturn(); };
+                    noReturnTwo();".to_string(),
+            expected: Object::Null
+        }
+    ];
+
+    run_vm_tests(tests);
+}
+
+#[test]
+fn test_local_bindings() {
+    let tests = vec![
+        VmTestCase {
+            input: "let one = fn() {let one = 1; one;};
+            one();".to_string(),
+            expected: Object::IntegerObject(1)
+        },
+        VmTestCase {
+            input: "let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };oneAndTwo();".to_string(),
+            expected: Object::IntegerObject(3)
+        },
+        VmTestCase {
+            input: "let oneAndTwo = fn() { let one = 1; let two = 2; one + two; };
+                    let threeAndFour = fn() { let three = 3; let four = 4; three + four; };
+                    oneAndTwo() + threeAndFour()".to_string(),
+            expected: Object::IntegerObject(10)
+        },
+    ];
+
+    run_vm_tests(tests);
+}
+
+#[test]
+fn test_calling_functions_with_args()
+{
+    let test = vec![
+        VmTestCase{
+            input: "let identity = fn(a){ a; };identity(4);".to_string(),
+            expected: Object::IntegerObject(4)
+        },
+        VmTestCase {
+            input: "let sum = fn(a, b) { a + b; }; sum(1, 2);".to_string(),
+            expected: Object::IntegerObject(3)
+        },
+        VmTestCase {
+            input: "let globalNum = 10;
+                    let sum = fn(a, b) {
+                        let c = a + b;
+                        c + globalNum;
+                    };
+                    
+                    let outer = fn() {
+                        sum(1, 2) + sum(3, 4) + globalNum;
+                    };
+                    
+                    outer() + globalNum;".to_string(),
+            expected: Object::IntegerObject(50)
+        }
+    ];
+
+    run_vm_tests(test);
+}
+
+#[test]
+fn test_built_in_fn()
+{
+    let test = vec![
+        VmTestCase
+        {
+            input: "len(\"\")".to_string(),
+            expected: Object::IntegerObject(0)
+        },
+        VmTestCase 
+        {
+            input: "len(\"four\")".to_string(),
+            expected: Object::IntegerObject(4)
+        },
+        VmTestCase
+        {
+            input: "len(\"hello world\")".to_string(),
+            expected: Object::IntegerObject(11)
+        },
+        VmTestCase
+        {
+            input: "len(1)".to_string(),
+            expected: Object::Error("not suported type: INTEGER".to_string())
+        },
+        VmTestCase
+        {
+            input: "len(\"one\", \"two\");".to_string(),
+            expected: Object::Error("wrong number of arguments: got = 2, want = 1".to_string())
+        },
+        VmTestCase
+        {
+            input: "len([1, 2, 3]);".to_string(),
+            expected:Object::IntegerObject(3)
+        },
+        VmTestCase
+        {
+            input: "len([]);".to_string(),
+            expected: Object::IntegerObject(0)
+        },
+        VmTestCase
+        {
+            input: "first([1, 2]);".to_string(),
+            expected: Object::IntegerObject(1)
+        },
+        VmTestCase
+        {
+            input: "push([], 1);".to_string(),
+            expected: Object::Array(vec![Box::new(Object::IntegerObject(1))])
+        }
+    ];
+
+    run_vm_tests(test);
 }

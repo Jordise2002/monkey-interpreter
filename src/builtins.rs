@@ -1,6 +1,14 @@
-use crate::object::Object;
+use crate::object::{BuiltInFn, Object};
 #[allow(dead_code)]
 
+pub const BUILT_INS: [&'static str; 6] = [
+        "len",
+        "first",
+        "rest",
+        "last",
+        "push",
+        "puts"
+];
 pub fn get_built_in(id: String) -> Option<Object> {
     match id.as_str() {
         "len" =>

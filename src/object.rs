@@ -3,6 +3,7 @@ use crate::ast::{Identifier, Statement};
 use crate::environment::Environment;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use crate::code::Instructions;
 
 #[derive(Debug, PartialEq, Clone,IntoStaticStr)]
 pub enum Object {
@@ -12,9 +13,11 @@ pub enum Object {
     ReturnValue(Box<Object>),
     Error(String),
     Function(FunctionStruct),
+    CompiledFunction(CompiledFunctionStruct),
     BuiltIn(BuiltInFn),
     Array(Vec<Box<Object>>),
     HashMap(HashMap<Object, Object>),
+    Closure(ClosureStruct),
     Null
 }
 
@@ -75,6 +78,12 @@ impl Object {
             },
             Object::HashMap(_) => {
                 "HashMap".to_string()
+            },
+            Object::CompiledFunction(content) => {
+                content.inspect()
+            },
+            Object::Closure(content) =>  {
+                content.inspect()
             }
         }
     }
@@ -110,6 +119,13 @@ impl Object {
             }
             Object::HashMap(_) => {
                 "HASH MAP"
+            },
+            Object::CompiledFunction(_) =>
+                {
+                    "COMPILED FUNCTION"
+                }
+            Object::Closure(_) => {
+                "CLOSURE"
             }
         }
     }
@@ -165,6 +181,29 @@ impl FunctionStruct {
 
 pub type BuiltInFn = fn(Vec<Object>) -> Object;
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct CompiledFunctionStruct {
+    pub instructions: Instructions,
+    pub num_vars: usize,
+    pub num_args: usize
+}
 
+impl CompiledFunctionStruct
+{
+    fn inspect(&self) -> String
+    {
+        format!("CompiledFunction[{}]", self.instructions.to_string())
+    }
+}
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct ClosureStruct {
+    pub function: CompiledFunctionStruct,
+    pub free_vars: Vec<Box<Object>>
+}
 
+impl ClosureStruct {
+    fn inspect(&self) -> String {
+        format!("Closure[{}]", self.function.inspect())
+    }
+}

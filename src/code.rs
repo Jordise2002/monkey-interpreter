@@ -68,6 +68,7 @@ impl Display for Instructions
         }
         write!(f, "{}", output)
     }
+
 }
 #[repr(u8)]
 #[derive(Clone, Debug, PartialEq, FromPrimitive)]
@@ -92,7 +93,14 @@ pub enum Opcode {
     OpGetGlobal,
     OpArray,
     OpHash,
-    OpIndex
+    OpIndex,
+    OpCall,
+    OpReturnValue,
+    OpReturn,
+    OpSetLocal,
+    OpGetLocal,
+    OpGetBuiltin,
+    OpClosure
 }
 
 pub struct Definition {
@@ -165,7 +173,28 @@ pub fn look_up(code: &Opcode) -> Option<Definition>
         },
         Opcode::OpIndex => {
             Some(Definition{name:"OpIndex".to_string(), operand_withs: vec![]})
-        }
+        },
+        Opcode::OpCall => {
+            Some(Definition{name:"OpCall".to_string(), operand_withs: vec![1]})
+        },
+        Opcode::OpReturnValue => {
+            Some(Definition{name:"OpReturnValue".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpReturn => {
+            Some(Definition{name:"OpReturn".to_string(), operand_withs: vec![]})
+        },
+        Opcode::OpSetLocal => {
+            Some(Definition{name:"OpSetLocal".to_string(), operand_withs: vec![1]})
+        },
+        Opcode::OpGetLocal => {
+            Some(Definition{name:"OpGetLocal".to_string(), operand_withs: vec![1]})
+        },
+        Opcode::OpGetBuiltin => {
+            Some(Definition{name:"OpGetBuiltin".to_string(), operand_withs: vec![1]})
+        },
+        Opcode::OpClosure => {
+            Some(Definition{name:"OpClosure".to_string(), operand_withs: vec![2, 1]})
+        },
         _ => {
             None
         }
@@ -179,14 +208,14 @@ pub fn make(code: Opcode, operands: Vec<usize>) -> Option<Instructions>
     instructions.push(code.clone() as u8);
     if let Some(content) = look_up(&code)
     {
-        for (i,o) in content.operand_withs.into_iter().zip(operands)
+        for (i,o) in content.operand_withs.clone().into_iter().zip(0..content.operand_withs.len())
         {
             match i {
                 2 => {
-                    instructions.write_u16::<BigEndian>(o as u16).unwrap();
+                    instructions.write_u16::<BigEndian>(operands[o] as u16).unwrap();
                 },
                 1 => {
-                    instructions.write_u8(o as u8).unwrap();
+                    instructions.write_u8(operands[o] as u8).unwrap();
                 }
                 _ => {
                     panic!("unsupported operand width: {}", i);
@@ -200,4 +229,14 @@ pub fn make(code: Opcode, operands: Vec<usize>) -> Option<Instructions>
     {
         None
     }
+}
+
+pub fn join_instructions(instructions: Vec<Instructions>) -> Instructions {
+
+    let mut aux = Vec::new();
+    for i in instructions
+    {
+        aux.extend(i.content);
+    }
+    Instructions{content:aux}
 }
