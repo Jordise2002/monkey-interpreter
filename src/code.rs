@@ -100,7 +100,8 @@ pub enum Opcode {
     OpSetLocal,
     OpGetLocal,
     OpGetBuiltin,
-    OpClosure
+    OpClosure,
+    OpGetFree
 }
 
 pub struct Definition {
@@ -195,6 +196,9 @@ pub fn look_up(code: &Opcode) -> Option<Definition>
         Opcode::OpClosure => {
             Some(Definition{name:"OpClosure".to_string(), operand_withs: vec![2, 1]})
         },
+        Opcode::OpGetFree => {
+            Some(Definition{name:"OpGetFree".to_string(), operand_withs: vec![1]})
+        }
         _ => {
             None
         }
